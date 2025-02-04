@@ -3,7 +3,7 @@ package view
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/rinjui/evildungeon/util"
+	"github.com/rinjui/evildungeon/utils"
 )
 
 func NewViewStarting(c Controller) View {
@@ -41,8 +41,9 @@ func (v *viewStarting) Draw(screen *ebiten.Image) {
 }
 
 func (v *viewStarting) getImg() *ebiten.Image {
-	if v.counter <= util.GlitterCond {
-		return util.BackgroundImg
+	if v.counter <= ebiten.TPS()/2 {
+		return utils.GameStartingBGImg
 	}
-	return util.BackgroundImg1
+
+	return utils.GameStartingImg
 }

@@ -1,21 +1,28 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/rinjui/evildungeon/util"
+	"github.com/rinjui/evildungeon/utils"
 	"github.com/rinjui/evildungeon/view"
 )
 
 const (
-// screenWidth  = 1280
-// screenHeight = 720
-// screenWidth  = 640
-// screenHeight = 480
+	// screenWidth  = 720
+	// screenHeight = 1280
+	screenWidth  = 360
+	screenHeight = 640
 )
 
 func main() {
-	ebiten.SetWindowSize(util.ScreenWidth, util.ScreenHeight)
+	fmt.Println("MAX TPS: ", ebiten.TPS())
+	fmt.Println("SCREEN: ", screenWidth, screenHeight)
+
+	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle("Evil Dungeon")
+
+	utils.InitResource()
 
 	g := NewGame()
 	g.RegisterView(view.ViewIDStarting, view.NewViewStarting(g))

@@ -1,8 +1,6 @@
 package view
 
 import (
-	"image/color"
-
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -12,8 +10,6 @@ func NewViewEnding(c Controller) View {
 
 type viewEnding struct {
 	ctl Controller
-
-	counter int
 }
 
 func (v *viewEnding) Update() error {
@@ -35,6 +31,5 @@ func (v *viewEnding) Update() error {
 }
 
 func (v *viewEnding) Draw(screen *ebiten.Image) {
-	screen.Fill(color.Black)
 	// screen.DrawImage(v.getImg(), &ebiten.DrawImageOptions{})
 }

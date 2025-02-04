@@ -1,134 +1,198 @@
 package view
 
 import (
-	"fmt"
-
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/rinjui/evildungeon/models"
-	"github.com/rinjui/evildungeon/util"
+	"github.com/rinjui/evildungeon/utils"
 )
 
-var (
-	ogSkyHeight   = 3
-	ogGrassHeight = 1
-	ogSandHeight  = 1
-	ogTotalHeight = ogSkyHeight + ogGrassHeight + ogSandHeight
-	ugTotalHeight = 50
-	gameHeight    = ogTotalHeight + ugTotalHeight
-	gameWidth     = 50
+const (
+	layoutX = 60
+	layoutY = 35
 )
 
 func NewViewGaming(c Controller) View {
 	return &viewGaming{
-		ctl:     c,
-		cursorX: util.ScreenWidth / 2,
-		cursorY: util.ScreenHeight / 2,
-		layout:  newLayout(),
+		ctl:    c,
+		layout: newLayout(),
 	}
-}
-
-func newLayout() [][]*models.Tile {
-
-	ogSkyImg := util.OgSkyBgTileImg.(*ebiten.Image)
-	ogSkyImgW, ogSkyImgH := ogSkyImg.Bounds().Dx(), ogSkyImg.Bounds().Dy()
-
-	ogGrassImg := util.OgGrassTileImg.(*ebiten.Image)
-	ogGrassImgW, ogGrassImgH := ogGrassImg.Bounds().Dx(), ogGrassImg.Bounds().Dy()
-
-	ogSandImg := util.OgSandTileImg.(*ebiten.Image)
-	ogSandImgW, ogSandImgH := ogSandImg.Bounds().Dx(), ogSandImg.Bounds().Dy()
-
-	ugMineImg := util.UgMineTileImg.(*ebiten.Image)
-	ugMineImgW, ugMineImgH := ugMineImg.Bounds().Dx(), ugMineImg.Bounds().Dy()
-
-	height, Y := 0, 0
-	layout := make([][]*models.Tile, gameHeight)
-	for i := 1; i < ogSkyHeight; i++ {
-		layout[height] = make([]*models.Tile, gameWidth)
-		for j := 0; j < gameWidth; j++ {
-			layout[height][j] = &models.Tile{
-				Bg: ogSkyImg,
-				X:  j * ogSkyImgW,
-				Y:  Y,
-			}
-		}
-		height++
-		Y += ogSkyImgH
-	}
-
-	for i := 0; i < ogGrassHeight; i++ {
-		layout[height] = make([]*models.Tile, gameWidth)
-		for j := 0; j < gameWidth; j++ {
-			layout[height][j] = &models.Tile{
-				Bg: ogGrassImg,
-				X:  j * ogGrassImgW,
-				Y:  Y,
-			}
-		}
-		height++
-		Y += ogGrassImgH
-	}
-
-	for i := 0; i < ogSandHeight; i++ {
-		layout[height] = make([]*models.Tile, gameWidth)
-		for j := 0; j < gameWidth; j++ {
-			layout[height][j] = &models.Tile{
-				Bg: ogSandImg,
-				X:  j * ogSandImgW,
-				Y:  Y,
-			}
-		}
-		height++
-		Y += ogSandImgH
-	}
-
-	for i := 0; i < ugTotalHeight; i++ {
-		layout[height] = make([]*models.Tile, gameWidth)
-		for j := 0; j < gameWidth; j++ {
-			layout[height][j] = &models.Tile{
-				Bg: ugMineImg,
-				X:  j * ugMineImgW,
-				Y:  Y,
-			}
-		}
-		height++
-		Y += ugMineImgH
-	}
-
-	return layout
 }
 
 type viewGaming struct {
-	ctl Controller
-
-	counter          int
-	cursorX, cursorY int
-	layout           [][]*models.Tile
+	ctl    Controller
+	layout *layout
 }
 
 func (v *viewGaming) Update() error {
-	v.counter++
-	v.counter = v.counter % ebiten.TPS()
+	// 長按
+	if d := inpututil.KeyPressDuration(ebiten.KeyUp); d > 1 && d%(ebiten.TPS()/10) == 0 {
+		v.layout.cursorY--
+	}
 
+	if d := inpututil.KeyPressDuration(ebiten.KeyDown); d > 1 && d%(ebiten.TPS()/10) == 0 {
+		v.layout.cursorY++
+	}
+
+	if d := inpututil.KeyPressDuration(ebiten.KeyLeft); d > 1 && d%(ebiten.TPS()/10) == 0 {
+		v.layout.cursorX--
+	}
+
+	if d := inpututil.KeyPressDuration(ebiten.KeyRight); d > 1 && d%(ebiten.TPS()/10) == 0 {
+		v.layout.cursorX++
+	}
+
+	if v.layout.cursorX < 0 {
+		v.layout.cursorX = 0
+	}
+
+	if v.layout.cursorX >= layoutX {
+		v.layout.cursorX = layoutX - 1
+	}
+
+	if v.layout.cursorY < 0 {
+		v.layout.cursorY = 0
+	}
+
+	if v.layout.cursorY >= layoutY {
+		v.layout.cursorY = layoutY - 1
+	}
+
+	v.layout.Update()
 	return nil
 }
 
 func (v *viewGaming) Draw(screen *ebiten.Image) {
-	for _, l := range v.layout {
-		for _, t := range l {
-			op := ebiten.DrawImageOptions{}
-			op.GeoM.Translate(float64(t.X), float64(t.Y))
+	v.drawBG(screen)
+	v.drawLayout(screen)
+	v.drawCursor(screen)
+}
 
-			screen.DrawImage(t.Bg, &op)
+func (v *viewGaming) drawBG(screen *ebiten.Image) {
+	screen.DrawImage(utils.GamingImg, nil)
+}
+
+func (v *viewGaming) drawLayout(screen *ebiten.Image) {
+	screenX := layoutX / 3
+	halfScreenX := layoutX / 6
+	left := v.layout.cursorX - halfScreenX
+	right := v.layout.cursorX + halfScreenX
+
+	if v.layout.cursorX < halfScreenX {
+		left = 0
+		right = screenX
+	}
+
+	if v.layout.cursorX >= layoutX-halfScreenX {
+		left = layoutX - screenX
+		right = layoutX
+	}
+
+	tileX, tileY := utils.Tile0Img.Bounds().Dx(), utils.Tile0Img.Bounds().Dy()
+
+	op := &ebiten.DrawImageOptions{}
+	for i := range v.layout.tiles {
+		op.GeoM.Reset()
+		op.GeoM.Translate(0, float64(i*tileY))
+		for j := left; j < right; j++ {
+			img := v.layout.GetTileImage(i, j)
+			if img == nil {
+				continue
+			}
+
+			screen.DrawImage(img, op)
+			op.GeoM.Translate(float64(tileX), 0)
+		}
+	}
+}
+
+func (v *viewGaming) drawCursor(screen *ebiten.Image) {
+	wx, _ := ebiten.WindowSize()
+	tileX := utils.CursorImg.Bounds().Dx()
+	tileY := utils.CursorImg.Bounds().Dy()
+
+	x := wx / 2
+	y := v.layout.cursorY * tileY
+
+	halfScreenX := layoutX / 6
+	if v.layout.cursorX < halfScreenX {
+		x = v.layout.cursorX * tileX
+	}
+
+	if v.layout.cursorX >= layoutX-halfScreenX {
+		x = (v.layout.cursorX * tileX) % wx
+	}
+
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(x), float64(y))
+	screen.DrawImage(utils.CursorImg, op)
+}
+
+func newLayout() *layout {
+	tiles := make([][]*models.Tile, layoutY)
+	for i := range tiles {
+		tiles[i] = make([]*models.Tile, layoutX)
+		for j := range tiles[i] {
+			tiles[i][j] = &models.Tile{Point: utils.RInt() % 200}
 		}
 	}
 
-	if v.counter <= util.GlitterCond {
-		op := ebiten.DrawImageOptions{}
-		op.GeoM.Translate(float64(v.cursorX), float64(v.cursorY))
-		screen.DrawImage(util.SCursorTileImg.(*ebiten.Image), &op)
+	return &layout{
+		tiles:   tiles,
+		cursorX: layoutX / 2,
+		cursorY: layoutY / 2,
+	}
+}
+
+type layout struct {
+	tiles            [][]*models.Tile
+	cursorX, cursorY int
+	count            int
+}
+
+func (l *layout) Update() {
+	l.count++
+	if l.count%ebiten.TPS() != 0 {
+		return
 	}
 
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("TPS: %0.2f", ebiten.ActualTPS()))
+	for i := range l.tiles {
+		for j := range l.tiles[i] {
+			if l.tiles[i][j].Point == -1 {
+				continue
+			}
+
+			l.tiles[i][j].Point += utils.RInt()%10 - 5
+			if l.tiles[i][j].Point <= 0 {
+				l.tiles[i][j].Point = 0
+			}
+		}
+	}
+
+	l.count = l.count % ebiten.TPS()
+}
+
+func (l *layout) GetTileImage(i, j int) *ebiten.Image {
+	if i < 0 || i >= len(l.tiles) {
+		return nil
+	}
+
+	if j < 0 || j >= len(l.tiles[0]) {
+		return nil
+	}
+
+	tile := l.tiles[i][j]
+	if tile.Point == -1 {
+		return nil
+	}
+
+	if tile.Point >= 200 {
+		return utils.Tile2Img
+	}
+
+	if tile.Point >= 100 {
+		return utils.Tile1Img
+	}
+
+	return utils.Tile0Img
 }
