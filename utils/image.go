@@ -22,6 +22,10 @@ var GameStartingImg *ebiten.Image
 var gamingImgByte []byte
 var GamingImg *ebiten.Image
 
+//go:embed assets/gamingboundarytile.png
+var gamingBoundaryTileImgByte []byte
+var GamingBoundaryTileImg *ebiten.Image
+
 //go:embed assets/tile0.png
 var tile0ImgByte []byte
 var Tile0Img *ebiten.Image
@@ -54,6 +58,7 @@ func InitResource() {
 	GameStartingBGImg = DecodeImage(gameStartingBGImgByte, ratioX, ratioY)
 	GameStartingImg = DecodeImage(gameStartingImgByte, ratioX, ratioY)
 	GamingImg = DecodeImage(gamingImgByte, ratioX, ratioY)
+	GamingBoundaryTileImg = DecodeImage(gamingBoundaryTileImgByte, ratioX, ratioY)
 	Tile0Img = DecodeImage(tile0ImgByte, ratioX, ratioY)
 	Tile1Img = DecodeImage(tile1ImgByte, ratioX, ratioY)
 	Tile2Img = DecodeImage(tile2ImgByte, ratioX, ratioY)
